@@ -50,7 +50,6 @@ parser.add_argument('servers', nargs='*', default=[],
 # SSH command
 SSH_CMD = ('ssh -o "ConnectTimeout={ssh_timeout}" {server} '
            'timeout {cmd_timeout}')
-
 # Command for running nvidia-smi locally
 NVIDIASMI_CMD = 'nvidia-smi -q -x'
 
@@ -167,7 +166,11 @@ def get_gpu_infos(nvidiasmi_output):
         model = gpu.find('product_name').text
         processes = gpu.findall('processes')[0]
         pids = [process.find('pid').text for process in processes]
-        gpu_infos.append({'idx': idx, 'model': model, 'pids': pids})
+        utilization = gpu.findall('utilization')[0]
+        
+        gpu_util = utilization.find('gpu_util').text
+        memory_util = utilization.find('memory_util').text
+        gpu_infos.append({'idx': idx, 'model': model, 'pids': pids, 'gpu_util': gpu_util, 'memory_util': memory_util})
 
     return gpu_infos
 
@@ -217,8 +220,10 @@ def print_gpu_infos(server, gpu_infos, run_ps, run_get_real_names,
 
             status = 'Used by {}'.format(', '.join(users))
 
-        info('\tGPU {} ({}): {}'.format(gpu_info['idx'],
+        info('\tGPU {0} ({1: <20} | gpu_util: {2: <5} memory_util: {3: <5}): {4}'.format(gpu_info['idx'],
                                         gpu_info['model'],
+                                        gpu_info['gpu_util'],
+                                        gpu_info['memory_util'],
                                         status))
 
 

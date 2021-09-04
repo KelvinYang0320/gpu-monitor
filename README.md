@@ -8,10 +8,10 @@ The script works by using your account to SSH into the servers and running `nvid
 
 ## Features
 
-- Show all free GPUs across servers
-- Show all current users of all GPUs (-l or --list)
-- Show all GPUs used by yourself (-m or --me)
-- Resolve usernames to real names (-f or --finger)
+- [X] Show all free GPUs across servers
+- [X] Show all current users of all GPUs (-l or --list)
+- [X] Show all GPUs used by yourself (-m or --me)
+- [ ] Resolve usernames to real names (-f or --finger)
 
 ## Requirements
 
@@ -19,35 +19,35 @@ The script works by using your account to SSH into the servers and running `nvid
 - SSH access to some Linux servers with Nvidia GPUs
 - If the server you connect to uses a different user name than your local name, you either have to specify your name on the servers using the `-s` option, or set up access as described in [setup for convenience](#setup-for-convenience).
 
-## Usage
+## Usage for NTHUCAD
+For NTHUCAD, since we have a set of servers, specify them in the file server `servers.txt` one address per line.
 
-For checking for free GPUs on some server(s), simply add their address(es) after the script name.
-You might need to enter your password. To avoid that, follow the steps in [setup for convenience](#setup-for-convenience).
+
+For checking for free GPUs on the server(s), simply add their address(es) after the script name.
+You might not want to enter your password again and again, follow the steps in [setup for convenience](#setup-for-convenience).
 
 ```
 > ./gpu_monitor.py myserver.com
 
 Server myserver.com:
-        GPU 5, Tesla K80
-        GPU 7, Tesla K80
+        GPU 0, GeForce GTX 1080
+        GPU 1, GeForce GTX 1080 Ti
+        ...
+Sever myserver2.com: No free GPUs :(
 ```
 
 If you have some set of servers that you regularily check, specify them in the file `servers.txt`, one address per line.
+```
 Once you did that, running just `./gpu_monitor.py` checks all servers specified in this file by default.
 
-If you want to list all GPUs and who currently uses them, you can use the `-l` flag:
+If you want to list all GPUs, utilization and who currently uses them, you can use the `-l` flag:
 ```
 > ./gpu_monitor.py -l myserver.com
 
 Server myserver.com:
-        GPU 0 (Tesla K80): Used by userA
-        GPU 1 (Tesla K80): Used by userB
-        GPU 2 (Tesla K80): Used by userA
-        GPU 3 (Tesla K80): Used by userC
-        GPU 4 (Tesla K80): Used by userC
-        GPU 5 (Tesla K80): Free
-        GPU 6 (Tesla K80): Used by userD
-        GPU 7 (Tesla K80): Free
+        GPU 0 (GeForce RTX 2080 Ti  | gpu_util: 61 %  memory_util: 27 % ): Used by userA
+        GPU 1 (GeForce RTX 2080 Ti  | gpu_util: 0 %   memory_util: 0 %  ): Used by userB
+        ...
 ```
 
 If you just want to see the GPUs used by yourself, you can use the `--me` flag.
@@ -55,23 +55,7 @@ This requires that your user name is the same as remotely, or that you specify t
 ```
 > ./gpu_monitor.py --me myserver.com
 Server myserver.com:
-        GPU 3 (Tesla K80): Used by userC
-```
-
-Finally, if you also want to see the real names of users, you can use the `-f` flag.
-This uses Linux's `finger` command.
-```
-> ./gpu_monitor.py -f myserver.com
-
-Server myserver.com:
-        GPU 0 (Tesla K80): Used by userA (Sue Parsons)
-        GPU 1 (Tesla K80): Used by userB (Tim MacDonald)
-        GPU 2 (Tesla K80): Used by userA (Sue Parsons)
-        GPU 3 (Tesla K80): Used by userC (Neil Piper)
-        GPU 4 (Tesla K80): Used by userC (Neil Piper)
-        GPU 5 (Tesla K80): Free
-        GPU 6 (Tesla K80): Used by userD (Brandon Ross)
-        GPU 7 (Tesla K80): Free
+        GPU 1 (GeForce RTX 2080 Ti  | gpu_util: 61 %  memory_util: 27 % ): Used by userA
 ```
 
 ## Setup for Convenience
@@ -80,26 +64,12 @@ Server myserver.com:
 If you want to avoid having to enter your password all the time, you can setup an SSH key to login into your server.
 If you did this already, you are fine.
 
+0. Log into NTHUCAD server
 1. Open a terminal and run `ssh-keygen` and follow the instructions.
 It might be a good idea to not use the default file but to specify a specific filename reflecting the servers you are connecting to.
-3. Run `ssh-copy-id -i your_key_path <user>@<server>`, where `<user>@<server>` is the server you want to connect or just `ic6`, `ic7`, ... `ic12`. 
-4. Repeat step 3 for every server you want to connect to (not necessary if you have a shared home directory on all the servers like our server).
-5. Try to connect to the server using `ssh <user>@<server>`.
+3. Run `ssh-copy-id -i your_key_path icx`, where `icx` is the server you want to connect. 
+        * Not necessary to repeat 3 since you have a shared home directory on all the servers like our server
+5. Try to connect to the server using `ssh -x icx`.
 The first time you connect, it should ask you for the password of the SSH key.
 If you are asked for the password multiple times, you might need to manually activate your SSH key using `ssh-add <path_to_ssh_key>`.
 If it still does not work, follow with the next steps.
-
-### If you have a different user name on your local machine
-
-This will show you how to avoid having to give your user name if you use the script (and SSH).
-
-1. Go to the folder `.ssh` in your home and open the file `config`.
-If it is not there, create it.
-2. Add something like this:
-```
-Host myserver.com
-User myusername
-```
-If you are connecting to multiple servers under the same domain, you can also use `Host *.mydomain.com` to indicate that you are using the same user name for all of them.
-3. If you have an SSH key with a different name, you also add the line `IdentityFile path_to_ssh_key` after the `User` line.
-
