@@ -37,7 +37,6 @@ Sever myserver2.com: No free GPUs :(
 ```
 
 If you have some set of servers that you regularily check, specify them in the file `servers.txt`, one address per line.
-```
 Once you did that, running just `./gpu_monitor.py` checks all servers specified in this file by default.
 
 If you want to list all GPUs, utilization and who currently uses them, you can use the `-l` flag:
