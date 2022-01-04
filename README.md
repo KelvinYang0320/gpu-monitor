@@ -72,3 +72,56 @@ It might be a good idea to not use the default file but to specify a specific fi
 The first time you connect, it should ask you for the password of the SSH key.
 If you are asked for the password multiple times, you might need to manually activate your SSH key using `ssh-add <path_to_ssh_key>`.
 If it still does not work, follow with the next steps.
+
+## Wait for free GPUs
+Please use `time.sleep()` to add delay in the execution of this program!
+```python3=
+# Check GPU Usage
+from collections import OrderedDict
+import subprocess
+import time
+import xml.etree.ElementTree
+
+while(1):
+    def extract(elem, tag, drop_s):
+      text = elem.find(tag).text
+      if drop_s not in text: raise Exception(text)
+      text = text.replace(drop_s, "")
+      try:
+        return int(text)
+      except ValueError:
+        return float(text)
+
+    d = OrderedDict()
+    d["time"] = time.time()
+
+    cmd = ['nvidia-smi', '-q', '-x']
+    cmd_out = subprocess.check_output(cmd)
+    gpu = xml.etree.ElementTree.fromstring(cmd_out).findall("gpu")[args.gpu_id]
+    
+
+    util = gpu.find("utilization")
+    d["gpu_util"] = extract(util, "gpu_util", "%")
+
+    d["mem_used"] = extract(gpu.find("fb_memory_usage"), "used", "MiB")
+    d["mem_used_per"] = d["mem_used"] * 100 / 11171
+
+    if d["gpu_util"] < 15 and d["mem_used"] < 2816 :
+        msg = 'GPU status: Idle \n'
+    else:
+        msg = 'GPU status: Busy \n'
+
+    now = time.strftime("%c")
+    print('\n\nUpdated at %s\n\nGPU utilization: %s %%\nVRAM used: %s %%\n\n%s\n\n' % (now, d["gpu_util"],d["mem_used_per"], msg))
+
+    if msg == 'GPU status: Busy \n':
+        # Check gpu memory every 1 min
+        print("wait 60 seconds")
+        time.sleep(60)
+    else:
+        # Before occupying the gpu memory, please wait for at least two hour in case someone is just modifying the code.
+        print("wait 2 hours")
+        time.sleep(7200)
+        print("Start training")
+        break
+```
